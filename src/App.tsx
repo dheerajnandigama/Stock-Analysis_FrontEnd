@@ -12,9 +12,10 @@ import { MarketOverview } from './components/MarketOverview';
 import { TechnicalIndicators } from './components/TechnicalIndicators';
 import { Login } from './components/auth/Login';
 import { Register } from './components/auth/Register';
+import { ConfirmRegistration } from './components/auth/ConfirmRegistration';
 import { CommonHeader } from './components/CommonHeader';
 import { AnalysisStatus as AnalysisStatusType, ChatHistory as ChatHistoryType, PortfolioItem, StockData } from './types';
-
+import api from './utils/api';
 // Mock data for demonstration
 const mockHistoricalData = Array.from({ length: 30 }, (_, i) => ({
   date: new Date(2024, 0, i + 1).toLocaleDateString(),
@@ -129,7 +130,7 @@ const mockPortfolioData: PortfolioItem[] = [
   }
 ];
 
-function Dashboard() {
+function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [selectedCompany, setSelectedCompany] = React.useState<{ symbol: string; name: string } | null>(null);
   const [analysisStatus, setAnalysisStatus] = React.useState<AnalysisStatusType>({
     historicalPrice: 'idle',
@@ -252,7 +253,7 @@ function Dashboard() {
     <div className="flex h-screen bg-gray-50">
       <Navigation activeView={activeView} onViewChange={setActiveView} />
       <div className="flex-1 overflow-auto">
-        <CommonHeader onSignOut={() => {}} />
+        <CommonHeader onSignOut={onLogout} />
         <Header onSearch={handleSearch} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {renderContent()}
@@ -263,18 +264,33 @@ function Dashboard() {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
+    // Check if user data exists in localStorage
+    const isAuth = !!localStorage.getItem('user');
+    console.log('Authentication State:', isAuth);
+    return isAuth;
+  });
 
-  const handleLogin = (email: string, password: string) => {
+  const handleLogin = (userData: any) => {
+    // Store minimal user data
+    localStorage.setItem('user', JSON.stringify({
+      user_id: userData.user_id,
+      username: userData.username
+    }));
     setIsAuthenticated(true);
   };
 
-  const handleRegister = (name: string, email: string, password: string) => {
-    setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    try {
+      // Use the `api` utility for the logout request
+      await api.post('/api/users/logout', {}, {
+        withCredentials: true // Ensure cookies are sent
+      });
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
@@ -296,15 +312,19 @@ function App() {
             isAuthenticated ? (
               <Navigate to="/" replace />
             ) : (
-              <Register onRegister={handleRegister} />
+              <Register />
             )
           }
+        />
+        <Route
+          path="/confirm"
+          element={<ConfirmRegistration onConfirm={() => {}}/>}
         />
         <Route
           path="/*"
           element={
             isAuthenticated ? (
-              <Dashboard />
+              <Dashboard onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )

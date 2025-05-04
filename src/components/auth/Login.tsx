@@ -1,18 +1,39 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { BarChart2, Mail, Lock, ArrowRight } from 'lucide-react';
+import api from '../../utils/api'; // Use default import for `api`
 
-interface LoginProps {
-  onLogin: (email: string, password: string) => void;
-}
+export function Login({ onLogin }: { onLogin: (userData: any) => void }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-export function Login({ onLogin }: LoginProps) {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(email, password);
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await api.post('/api/users/login', {
+        username: email,
+        password: password
+      });
+
+      console.log('Login Response:', response.data); // Add logging
+
+      if (response.data.status === 'success') {
+        onLogin(response.data.data);
+        navigate('/', { replace: true });
+      } else {
+        setError(response.data.message || 'Login failed');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -70,6 +91,12 @@ export function Login({ onLogin }: LoginProps) {
                 </div>
               </div>
 
+              {error && (
+                <div className="text-red-500 text-sm text-center">
+                  {error}
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
@@ -83,19 +110,22 @@ export function Login({ onLogin }: LoginProps) {
                 </div>
 
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                  <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
               </div>
 
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={isLoading}
+                  className={`w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
+                    isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                 >
-                  Sign in
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  {isLoading ? 'Signing in...' : 'Sign in'}
+                  {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
                 </button>
               </div>
             </form>

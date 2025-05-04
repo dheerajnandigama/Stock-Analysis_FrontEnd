@@ -1,21 +1,54 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { BarChart2, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import axios from 'axios';
 
-interface RegisterProps {
-  onRegister: (name: string, email: string, password: string) => void;
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
-export function Register({ onRegister }: RegisterProps) {
-  const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [confirmPassword, setConfirmPassword] = React.useState('');
+export function Register() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === confirmPassword) {
-      onRegister(name, email, password);
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/users/register`, {
+        username: email,
+        email: email,
+        password: password,
+        name: name
+      }, {
+        withCredentials: true
+      });
+      
+      if (response.data.status === 'success') {
+        localStorage.setItem('pendingConfirmation', email); // Store email for confirmation
+        navigate('/confirm', { 
+          state: { 
+            username: email,
+            message: 'Please check your email for the confirmation code.' 
+          }
+        });
+      } else {
+        setError(response.data.message || 'Registration failed');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -114,13 +147,20 @@ export function Register({ onRegister }: RegisterProps) {
                 </div>
               </div>
 
+              {error && (
+                <div className="text-red-500 text-sm">
+                  {error}
+                </div>
+              )}
+
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={isLoading}
+                  className={`w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                 >
-                  Create account
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  {isLoading ? 'Creating account...' : 'Create account'}
+                  {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
                 </button>
               </div>
             </form>
