@@ -1,48 +1,199 @@
 import React from 'react';
-import { Trash2, TrendingUp, TrendingDown, DollarSign, Calendar } from 'lucide-react';
-import { PortfolioItem } from '../types';
+import { Trash2, TrendingUp, TrendingDown, DollarSign, Calendar, Search } from 'lucide-react';
+import { PortfolioItem, Company, StockTransaction } from '../types';
+import { StockSelector } from './StockSelector';
+import { StockInfo } from './StockInfo';
 
 interface PortfolioProps {
   items: PortfolioItem[];
   onRemove: (symbol: string) => void;
 }
 
+const mockStockPrices: Record<string, number> = {
+  AAPL: 198.89,
+  MSFT: 420.45,
+  GOOGL: 142.65,
+  AMZN: 175.35
+};
+
 export function Portfolio({ items, onRemove }: PortfolioProps) {
-  const totalValue = items.reduce((sum, item) => sum + item.price, 0);
-  const totalGain = items.reduce((sum, item) => sum + (item.price - item.initialPrice), 0);
-  const totalGainPercentage = (totalGain / (totalValue - totalGain)) * 100;
+  const [port, setPort] = React.useState([]);
+  const [selectedStock, setSelectedStock] = React.useState('');
+  const [transactions, setTransactions] = React.useState<StockTransaction[]>([]);
+  const [portfolio, setPortfolio] = React.useState<PortfolioItem[]>(
+    items.map(item => ({
+      ...item,
+      currentValue: item.currentValue || 0,
+      totalInvestment: item.totalInvestment || 0,
+      profitLoss: item.profitLoss || 0,
+      profitLossPercentage: item.profitLossPercentage || 0,
+      quantity: item.quantity || 0
+    }))
+  );
+
+   React.useEffect(()=>{
+      (async()=>{
+          const portfolioResponse = await fetch('http://127.0.0.1:5002/portfolio', {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
+              }
+            });
+            const portfolioContent = await portfolioResponse.json();
+            console.log(portfolioContent)
+      
+            const finalportfolioContent = portfolioContent.map((eachData)=>{
+              return {
+                currentValue: eachData.amount_invested,
+                // "company_id": 3,
+                name: eachData.company_name,
+                quantity: eachData.current_holding_qty,
+                price: eachData.current_price,
+                profitLoss: eachData.profit_or_loss_amount,
+                profitLossPercentage: eachData.profit_or_loss_percent,
+               // "status": "Loss",
+                symbol: eachData.ticker_symbol
+              }
+            })
+      
+            console.log(finalportfolioContent)
+      
+            setPort(finalportfolioContent)
+  
+      })()
+    },[])
+
+  const totalValue = portfolio.reduce((sum, item) => sum + (item.currentValue || 0), 0);
+  const totalInvestment = portfolio.reduce((sum, item) => sum + (item.totalInvestment || 0), 0);
+  const totalProfitLoss = totalValue - totalInvestment;
+  const totalProfitLossPercentage = totalInvestment !== 0 
+    ? ((totalValue - totalInvestment) / totalInvestment) * 100 
+    : 0;
+
+  const handleStockTransaction = (stock: Company, quantity: number, type: 'buy' | 'sell') => {
+    const price = mockStockPrices[stock.symbol] || 0;
+    const transaction: StockTransaction = {
+      type,
+      quantity,
+      price,
+      timestamp: new Date()
+    };
+
+    setTransactions(prev => [...prev, transaction]);
+
+    const existingStock = portfolio.find(item => item.symbol === stock.symbol);
+    if (existingStock) {
+      if (type === 'buy') {
+        const newQuantity = (existingStock.quantity || 0) + quantity;
+        const newTotalInvestment = (existingStock.totalInvestment || 0) + (quantity * price);
+        const newCurrentValue = newQuantity * price;
+        
+        setPortfolio(prev => prev.map(item => 
+          item.symbol === stock.symbol
+            ? {
+                ...item,
+                quantity: newQuantity,
+                totalInvestment: newTotalInvestment,
+                currentValue: newCurrentValue,
+                profitLoss: newCurrentValue - newTotalInvestment,
+                profitLossPercentage: newTotalInvestment !== 0 
+                  ? ((newCurrentValue - newTotalInvestment) / newTotalInvestment) * 100 
+                  : 0
+              }
+            : item
+        ));
+      } else {
+        if ((existingStock.quantity || 0) >= quantity) {
+          const newQuantity = (existingStock.quantity || 0) - quantity;
+          const soldAmount = quantity * price;
+          const newTotalInvestment = existingStock.totalInvestment 
+            ? existingStock.totalInvestment * (newQuantity / existingStock.quantity) 
+            : 0;
+          const newCurrentValue = newQuantity * price;
+
+          if (newQuantity === 0) {
+            setPortfolio(prev => prev.filter(item => item.symbol !== stock.symbol));
+          } else {
+            setPortfolio(prev => prev.map(item =>
+              item.symbol === stock.symbol
+                ? {
+                    ...item,
+                    quantity: newQuantity,
+                    totalInvestment: newTotalInvestment,
+                    currentValue: newCurrentValue,
+                    profitLoss: newCurrentValue - newTotalInvestment,
+                    profitLossPercentage: newTotalInvestment !== 0 
+                      ? ((newCurrentValue - newTotalInvestment) / newTotalInvestment) * 100 
+                      : 0
+                  }
+                : item
+            ));
+          }
+        }
+      }
+    } else if (type === 'buy') {
+      const newStock: PortfolioItem = {
+        symbol: stock.symbol,
+        name: stock.name,
+        price,
+        change: 0,
+        sentiment: 75,
+        recommendation: 'Buy',
+        pros: ['New position'],
+        cons: ['Market volatility'],
+        prediction: price * 1.1,
+        messages: [],
+        addedAt: new Date(),
+        initialPrice: price,
+        quantity,
+        totalInvestment: quantity * price,
+        currentValue: quantity * price,
+        profitLoss: 0,
+        profitLossPercentage: 0
+      };
+      
+      setPortfolio(prev => [...prev, newStock]);
+    }
+  };
 
   return (
     <div className="space-y-6">
+      <StockSelector onSelect={handleStockTransaction} />
+
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Portfolio Overview</h2>
-          <div className="flex items-center space-x-2">
-            <DollarSign className="h-5 w-5 text-gray-500" />
-            <span className="text-lg font-semibold">${totalValue.toFixed(2)}</span>
-            <span className={`text-sm font-medium ${totalGainPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {totalGainPercentage >= 0 ? '+' : ''}{totalGainPercentage.toFixed(2)}%
-            </span>
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Total Value</p>
+              <p className="text-xl font-semibold">${totalValue.toFixed(2)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Total P/L</p>
+              <p className={`text-lg font-semibold ${totalProfitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                ${totalProfitLoss.toFixed(2)} ({totalProfitLossPercentage.toFixed(2)}%)
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {items.map((item) => {
-            const percentageChange = ((item.price - item.initialPrice) / item.initialPrice) * 100;
-            const isPositive = percentageChange >= 0;
-            const gainLoss = item.price - item.initialPrice;
+          {port.map((item) => {
+            const isPositive = (item.profitLoss || 0) >= 0;
 
             return (
-              <div key={item.symbol} className="bg-gray-50 rounded-lg p-6 relative group">
-                <button
-                  onClick={() => onRemove(item.symbol)}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 className="h-5 w-5 text-gray-400 hover:text-red-500" />
-                </button>
+              <div 
+                key={item.symbol} 
+                className={`bg-gray-50 rounded-lg p-6 relative group cursor-pointer ${
+                  selectedStock === item.symbol ? 'ring-2 ring-blue-500' : ''
+                }`}
+                onClick={() => setSelectedStock(item.symbol)}
+              >
 
-                <div className="flex items-start space-x-4">
-                  <div className="flex-1">
+                <div className="flex items-start justify-between">
+                  <div>
                     <div className="flex items-center space-x-2">
                       <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
                       <span className="text-sm text-gray-500">{item.symbol}</span>
@@ -52,7 +203,7 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
                       <div>
                         <p className="text-sm text-gray-500">Current Price</p>
                         <div className="flex items-baseline space-x-2 mt-1">
-                          <span className="text-xl font-semibold">${item.price.toFixed(2)}</span>
+                          <span className="text-xl font-semibold">${(item.price || 0).toFixed(2)}</span>
                           {isPositive ? (
                             <TrendingUp className="h-4 w-4 text-green-500" />
                           ) : (
@@ -62,25 +213,20 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
                       </div>
 
                       <div>
-                        <p className="text-sm text-gray-500">Initial Price</p>
-                        <p className="text-xl font-semibold mt-1">${item.initialPrice.toFixed(2)}</p>
+                        <p className="text-sm text-gray-500">Quantity</p>
+                        <p className="text-xl font-semibold mt-1">{item.quantity || 0}</p>
                       </div>
 
                       <div>
-                        <p className="text-sm text-gray-500">Gain/Loss</p>
+                        <p className="text-sm text-gray-500">Total Value</p>
+                        <p className="text-lg font-semibold">${(item.currentValue || 0).toFixed(2)}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-gray-500">Profit/Loss</p>
                         <p className={`text-lg font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                          {isPositive ? '+' : ''}{gainLoss.toFixed(2)} ({percentageChange.toFixed(2)}%)
+                          {isPositive ? '+' : ''}{(item.profitLoss || 0).toFixed(2)} ({(item.profitLossPercentage || 0).toFixed(2)}%)
                         </p>
-                      </div>
-
-                      <div>
-                        <p className="text-sm text-gray-500">Added Date</p>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            {new Date(item.addedAt).toLocaleDateString()}
-                          </span>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -90,13 +236,17 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
           })}
         </div>
 
-        {items.length === 0 && (
+        {portfolio.length === 0 && (
           <div className="text-center py-12">
             <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Your portfolio is empty. Start by analyzing stocks and adding them to your portfolio.</p>
+            <p className="text-gray-500">Your portfolio is empty. Start by adding stocks using the selector above.</p>
           </div>
         )}
       </div>
+
+      {selectedStock && (
+        <StockInfo symbol={selectedStock} />
+      )}
     </div>
   );
 }

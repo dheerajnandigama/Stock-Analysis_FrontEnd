@@ -61,7 +61,7 @@ export function Login({ onLogin }: { onLogin: (userData: any) => void }) {
                   </div>
                   <input
                     id="email"
-                    type="email"
+                    type="text"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}

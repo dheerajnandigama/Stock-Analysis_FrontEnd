@@ -24,7 +24,7 @@ const NavItem: React.FC<NavItem> = ({ icon, label, isActive, onClick }) => (
 
 interface NavigationProps {
   activeView: string;
-  onViewChange: (view: 'analysis' | 'portfolio' | 'chat' | 'profile') => void;
+  onViewChange: (view: 'analysis' | 'portfolio' | 'profile') => void;
 }
 
 export function Navigation({ activeView, onViewChange }: NavigationProps) {
@@ -49,12 +49,6 @@ export function Navigation({ activeView, onViewChange }: NavigationProps) {
           label="Portfolio"
           isActive={activeView === 'portfolio'}
           onClick={() => onViewChange('portfolio')}
-        />
-        <NavItem
-          icon={<MessageSquare className="h-5 w-5" />}
-          label="Chat History"
-          isActive={activeView === 'chat'}
-          onClick={() => onViewChange('chat')}
         />
         <NavItem
           icon={<UserCircle className="h-5 w-5" />}
