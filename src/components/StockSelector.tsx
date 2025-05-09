@@ -33,7 +33,7 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
 
   React.useEffect(()=>{
     (async()=>{
-        const allStockResponse = await fetch('http://127.0.0.1:5002/companies', {
+        const allStockResponse = await fetch('http://stockmarket-alb-1239048680.us-east-1.elb.amazonaws.com/companies', {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -61,7 +61,7 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
 
   React.useEffect(()=>{
     (async()=>{
-        const currPriceResponse = await fetch(`http://localhost:5002/current-price?ticker=${selectedStock.symbol}`, {
+        const currPriceResponse = await fetch(`http://stockmarket-alb-1239048680.us-east-1.elb.amazonaws.com/current-price?ticker=${selectedStock.symbol}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -89,7 +89,7 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
   };
 
   const executeTransaction = async ()=>{
-    const rawResponse = await fetch('http://localhost:5002/transaction', {
+    const rawResponse = await fetch('http://stockmarket-alb-1239048680.us-east-1.elb.amazonaws.com/transaction', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',

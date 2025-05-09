@@ -50,7 +50,7 @@ export function StockInfo({ symbol }: StockInfoProps) {
             return
         }
         console.log({symbol:symbol})
-          const stockInfoResponse = await fetch(`http://127.0.0.1:5002/market-overview?ticker=${symbol}`, {
+          const stockInfoResponse = await fetch(`http://stockmarket-alb-1239048680.us-east-1.elb.amazonaws.com/market-overview?ticker=${symbol}`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json',

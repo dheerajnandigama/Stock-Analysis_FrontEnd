@@ -231,8 +231,6 @@ export function Analysis({ data }: AnalysisProps) {
 
   React.useEffect(() => {
     scrollToBottom();
-    
-    // Save messages to localStorage whenever they change
     localStorage.setItem('analysisMessages', JSON.stringify(messages));
   }, [messages]);
 
@@ -260,7 +258,7 @@ export function Analysis({ data }: AnalysisProps) {
   
       if (selectedCompany && newMessage.trim()) {
   
-        const rawResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/historical', {
+        const rawResponse = await fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/historical', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -286,7 +284,7 @@ export function Analysis({ data }: AnalysisProps) {
   
         setHistory(transformedHistoryData.reverse())
   
-        const newsResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/news', {
+        const newsResponse = await fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/news', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -313,7 +311,7 @@ export function Analysis({ data }: AnalysisProps) {
         console.log(transformedNewsData)
         setNews(transformedNewsData)
   
-        const mediaResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/socialmedia', {
+        const mediaResponse = await fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/socialmedia', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -341,7 +339,7 @@ export function Analysis({ data }: AnalysisProps) {
         console.log(transformedMediaData)
         setMedia(transformedMediaData)
   
-        const resultResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/result', {
+        const resultResponse = await fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/result', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -381,7 +379,7 @@ export function Analysis({ data }: AnalysisProps) {
       }
     }else{
       console.log("here---2")
-      const followUpResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/followup', {
+      const followUpResponse = await fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/followup', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',

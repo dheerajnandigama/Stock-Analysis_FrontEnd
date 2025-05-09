@@ -32,7 +32,7 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
   );
 
   const callPortfolio = async () =>{
-    const portfolioResponse = await fetch('http://127.0.0.1:5002/portfolio', {
+    const portfolioResponse = await fetch('http://stockmarket-alb-1239048680.us-east-1.elb.amazonaws.com/portfolio', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
