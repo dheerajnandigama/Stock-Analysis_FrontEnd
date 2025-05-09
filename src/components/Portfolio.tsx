@@ -3,6 +3,7 @@ import { Trash2, TrendingUp, TrendingDown, DollarSign, Calendar, Search } from '
 import { PortfolioItem, Company, StockTransaction } from '../types';
 import { StockSelector } from './StockSelector';
 import { StockInfo } from './StockInfo';
+import { PORTFOLIO_API_BASE_URL } from '../config/api';
 
 interface PortfolioProps {
   items: PortfolioItem[];
@@ -35,7 +36,7 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
   const callPortfolio = async () => {
     setIsLoading(true);
     try {
-      const portfolioResponse = await fetch('http://localhost:5002/portfolio', {
+      const portfolioResponse = await fetch(`${PORTFOLIO_API_BASE_URL}/portfolio`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

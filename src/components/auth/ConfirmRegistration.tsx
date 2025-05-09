@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BarChart2, CheckCircle } from 'lucide-react';
-import api from '../../utils/api'; // Import the `api` utility
+import { DATA_API_BASE_URL } from '../../config/api';
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: DATA_API_BASE_URL,
+  withCredentials: true
+});
 
 interface ConfirmRegistrationProps {
   onConfirm: () => void;

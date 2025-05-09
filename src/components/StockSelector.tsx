@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { Company } from '../types';
 import toast, { Toaster } from 'react-hot-toast';
+import { PORTFOLIO_API_BASE_URL } from '../config/api';
 
 
 interface StockSelectorProps {
@@ -34,7 +35,7 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
 
   React.useEffect(()=>{
     (async()=>{
-        const allStockResponse = await fetch('http://localhost:5002/companies', {
+        const allStockResponse = await fetch(`${PORTFOLIO_API_BASE_URL}/companies`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -62,7 +63,7 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
 
   React.useEffect(()=>{
     (async()=>{
-        const currPriceResponse = await fetch(`http://localhost:5002/current-price?ticker=${selectedStock.symbol}`, {
+        const currPriceResponse = await fetch(`${PORTFOLIO_API_BASE_URL}/current-price?ticker=${selectedStock.symbol}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -91,7 +92,7 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
 
   const executeTransaction = async () => {
     try {
-      const rawResponse = await fetch('http://localhost:5002/transaction', {
+      const rawResponse = await fetch(`${PORTFOLIO_API_BASE_URL}/transaction`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',

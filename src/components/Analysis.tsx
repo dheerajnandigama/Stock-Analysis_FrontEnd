@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, User, Bot, Send, TrendingUp, TrendingDown, Doll
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StockData, ChatMessage, Company } from '../types';
 import { toast } from 'react-hot-toast';
+import { DATA_API_BASE_URL, PORTFOLIO_API_BASE_URL } from '../config/api';
 
 function convertDate(dateString) {
   // Split the date string to extract year, month, and day
@@ -217,7 +218,7 @@ export function Analysis({ data }: AnalysisProps) {
   React.useEffect(() => {
     (async () => {
       try {
-        const allStockResponse = await fetch('http://localhost:5002/companies', {
+        const allStockResponse = await fetch(`${PORTFOLIO_API_BASE_URL}/companies`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -278,7 +279,7 @@ export function Analysis({ data }: AnalysisProps) {
         });
 
         // Historical Data API Call
-        const historicalPromise = fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/historical', {
+        const historicalPromise = fetch(`${DATA_API_BASE_URL}/api/prediction/multistep/historical`, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -301,7 +302,7 @@ export function Analysis({ data }: AnalysisProps) {
         });
 
         // News API Call
-        const newsPromise = fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/news', {
+        const newsPromise = fetch(`${DATA_API_BASE_URL}/api/prediction/multistep/news`, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -326,7 +327,7 @@ export function Analysis({ data }: AnalysisProps) {
         });
 
         // Social Media API Call
-        const socialPromise = fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/socialmedia', {
+        const socialPromise = fetch(`${DATA_API_BASE_URL}/api/prediction/multistep/socialmedia`, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -352,7 +353,7 @@ export function Analysis({ data }: AnalysisProps) {
         });
 
         // Result API Call
-        const resultPromise = fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/result', {
+        const resultPromise = fetch(`${DATA_API_BASE_URL}/api/prediction/multistep/result`, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -402,7 +403,7 @@ export function Analysis({ data }: AnalysisProps) {
       }
     } else {
       console.log("here---2")
-      const followUpResponse = await fetch('http://stockmarket-alb-1785968392.us-east-1.elb.amazonaws.com/api/prediction/multistep/followup', {
+      const followUpResponse = await fetch(`${DATA_API_BASE_URL}/api/prediction/multistep/followup`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',

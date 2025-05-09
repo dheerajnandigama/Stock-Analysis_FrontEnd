@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BarChart2, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { DATA_API_BASE_URL } from '../../config/api';
 import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
 export function Register() {
   const [name, setName] = useState('');
@@ -25,7 +24,7 @@ export function Register() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/users/register`, {
+      const response = await axios.post(`${DATA_API_BASE_URL}/api/users/register`, {
         username: email,
         email: email,
         password: password,

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Activity, BarChart2, Percent } from 'lucide-react';
 import { StockDetails } from '../types';
+import { PORTFOLIO_API_BASE_URL } from '../config/api';
 
 interface StockInfoProps {
   symbol: string;
@@ -50,7 +51,7 @@ export function StockInfo({ symbol }: StockInfoProps) {
             return
         }
         console.log({symbol:symbol})
-          const stockInfoResponse = await fetch(`http://localhost:5002/market-overview?ticker=${symbol}`, {
+          const stockInfoResponse = await fetch(`${PORTFOLIO_API_BASE_URL}/market-overview?ticker=${symbol}`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json',

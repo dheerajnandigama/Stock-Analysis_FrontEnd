@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BarChart2, Mail, Lock, ArrowRight } from 'lucide-react';
-import api from '../../utils/api'; // Use default import for `api`
+import { DATA_API_BASE_URL } from '../../config/api';
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: DATA_API_BASE_URL,
+  withCredentials: true
+});
 
 export function Login({ onLogin }: { onLogin: (userData: any) => void }) {
   const [email, setEmail] = useState('');
