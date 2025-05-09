@@ -24,6 +24,7 @@ export function Login({ onLogin }: { onLogin: (userData: any) => void }) {
       console.log('Login Response:', response.data); // Add logging
 
       if (response.data.status === 'success') {
+        localStorage.removeItem('analysisMessages')
         onLogin(response.data.data);
         navigate('/', { replace: true });
       } else {

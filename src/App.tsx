@@ -102,11 +102,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     socialMedia: 'idle',
   });
   const [portfolio, setPortfolio] = React.useState<PortfolioItem[]>(mockPortfolioData);
-  const [activeView, setActiveView] = React.useState<'analysis' | 'portfolio' | 'profile'>('analysis');
 
   const handleSearch = (symbol: string, query: string) => {
     setSelectedCompany({ symbol, name: mockStockData.name });
-    setActiveView('analysis');
   };
 
   const handleBookmark = () => {
@@ -126,24 +124,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setPortfolio((prev) => prev.filter((item) => item.symbol !== symbol));
   };
 
-  const renderContent = () => {
-    switch (activeView) {
-      case 'portfolio':
-        return <Portfolio items={portfolio} onRemove={handleRemoveFromPortfolio} />;
-      case 'profile':
-        return <Profile />;
-      default:
-        return <Analysis data={mockStockData} />;
-    }
-  };
-
   return (
     <div className="flex h-screen bg-gray-50">
-      <Navigation activeView={activeView} onViewChange={setActiveView} />
+      <Navigation />
       <div className="flex-1 overflow-auto">
-      <CommonHeader onSignOut={onLogout} />
+        <CommonHeader onSignOut={onLogout} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {renderContent()}
+          <Routes>
+            <Route path="/" element={<Navigate to="/analysis" replace />} />
+            <Route path="/analysis" element={<Analysis data={mockStockData} />} />
+            <Route path="/portfolio" element={<Portfolio items={portfolio} onRemove={handleRemoveFromPortfolio} />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
         </main>
       </div>
     </div>

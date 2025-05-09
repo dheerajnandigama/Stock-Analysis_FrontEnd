@@ -31,38 +31,42 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
     }))
   );
 
+  const callPortfolio = async () =>{
+    const portfolioResponse = await fetch('http://127.0.0.1:5002/portfolio', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
+      }
+    });
+    const portfolioContent = await portfolioResponse.json();
+    console.log(portfolioContent)
+
+    const finalportfolioContent = {
+      portfolio:  portfolioContent.portfolio.map((eachData)=>{
+        return {
+          currentValue: eachData.amount_invested,
+          // "company_id": 3,
+          name: eachData.company_name,
+          quantity: eachData.current_holding_qty,
+          price: eachData.current_price,
+          profitLoss: eachData.profit_or_loss_amount,
+          profitLossPercentage: eachData.profit_or_loss_percent,
+         // "status": "Loss",
+          symbol: eachData.ticker_symbol
+        }
+      }),
+      summary : portfolioContent.summary
+    }
+    console.log(finalportfolioContent)
+
+    setPort(finalportfolioContent)
+    
+  }
+
    React.useEffect(()=>{
-      (async()=>{
-          const portfolioResponse = await fetch('http://127.0.0.1:5002/portfolio', {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
-              }
-            });
-            const portfolioContent = await portfolioResponse.json();
-            console.log(portfolioContent)
-      
-            const finalportfolioContent = portfolioContent.map((eachData)=>{
-              return {
-                currentValue: eachData.amount_invested,
-                // "company_id": 3,
-                name: eachData.company_name,
-                quantity: eachData.current_holding_qty,
-                price: eachData.current_price,
-                profitLoss: eachData.profit_or_loss_amount,
-                profitLossPercentage: eachData.profit_or_loss_percent,
-               // "status": "Loss",
-                symbol: eachData.ticker_symbol
-              }
-            })
-      
-            console.log(finalportfolioContent)
-      
-            setPort(finalportfolioContent)
-  
-      })()
+    callPortfolio()
     },[])
 
   const totalValue = portfolio.reduce((sum, item) => sum + (item.currentValue || 0), 0);
@@ -160,7 +164,7 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
 
   return (
     <div className="space-y-6">
-      <StockSelector onSelect={handleStockTransaction} />
+      <StockSelector onSelect={handleStockTransaction} callPortfolio={callPortfolio} />
 
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
@@ -168,19 +172,19 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
           <div className="flex items-center space-x-4">
             <div className="text-right">
               <p className="text-sm text-gray-500">Total Value</p>
-              <p className="text-xl font-semibold">${totalValue.toFixed(2)}</p>
+              <p className="text-xl font-semibold">${port?.summary?.["total_amount_invested"]}</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500">Total P/L</p>
-              <p className={`text-lg font-semibold ${totalProfitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                ${totalProfitLoss.toFixed(2)} ({totalProfitLossPercentage.toFixed(2)}%)
+              <p className={`text-lg font-semibold ${port?.summary?.["status"] === "Profit" ? 'text-green-500' : 'text-red-500'}`}>
+                ${port?.summary?.["total_profit_or_loss_amount"].toFixed(2)} ({port?.summary?.["total_profit_or_loss_percent"].toFixed(2)}%)
               </p>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {port.map((item) => {
+          {port?.portfolio?.map((item) => {
             const isPositive = (item.profitLoss || 0) >= 0;
 
             return (

@@ -5,10 +5,13 @@ import { Company } from '../types';
 
 interface StockSelectorProps {
   onSelect: (stock: Company, quantity: number, type: 'buy' | 'sell') => void;
+  callPortfolio: () => void;
+
 }
 
-export function StockSelector({ onSelect }: StockSelectorProps) {
+export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
   const [allStocks, setAllStocks] = React.useState([]);
+  const [currPrice, setCurrPrice] = React.useState({});
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [selectedStock, setSelectedStock] = React.useState<Company | null>(null);
   const [quantity, setQuantity] = React.useState(1);
@@ -56,6 +59,25 @@ export function StockSelector({ onSelect }: StockSelectorProps) {
     })()
   },[])
 
+  React.useEffect(()=>{
+    (async()=>{
+        const currPriceResponse = await fetch(`http://localhost:5002/current-price?ticker=${selectedStock.symbol}`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
+            }
+          });
+          const currPriceContent = await currPriceResponse.json();
+    
+    
+    
+          setCurrPrice(currPriceContent)
+
+    })()
+  },[selectedStock])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedStock) {
@@ -75,26 +97,17 @@ export function StockSelector({ onSelect }: StockSelectorProps) {
           'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
         },
         body: JSON.stringify({
-            "ticker": selectedStock,
+            "ticker": selectedStock?.symbol,
             "trade_qty": quantity,
             "action": transactionType.toLocaleUpperCase(),
-            "action_price": 145.25,
-            "timestamp": "2025-05-07T00:00:00"
+            "action_price": currPrice?.currentPrice,
+            "timestamp": new Date().toISOString().split('.')[0]
       })
       });
       const content = await rawResponse.json();
       console.log(content)
 
-      const transformedHistoryData = content.data.historical_prices.map((eachData)=>{
-        return {
-          date: convertDate(eachData.date),
-          price: eachData.price
-        }
-      })
-
-      console.log(transformedHistoryData)
-
-      setHistory(transformedHistoryData.reverse())
+      await callPortfolio()
   }
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -160,6 +173,20 @@ export function StockSelector({ onSelect }: StockSelectorProps) {
                   min="1"
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex-1">
+                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                  {`Current Price (${currPrice?.ticker})`}
+                </label>
+                <input
+                  type="number"
+                  disabled
+                  id="quantity"
+                  min="1"
+                  value={currPrice?.currentPrice}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

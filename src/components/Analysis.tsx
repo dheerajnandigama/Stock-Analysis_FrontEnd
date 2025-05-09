@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChevronDown, ChevronUp, User, Bot, Send, TrendingUp, TrendingDown, DollarSign, Activity, BarChart2, Percent, Clock, Globe } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StockData, ChatMessage, Company } from '../types';
@@ -136,7 +136,7 @@ const Message: React.FC<{ message: ChatMessage }> = ({ message }) => {
               {message.data.prediction && (
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-gray-700">Price Target:</span>
-                  <span className="font-medium text-gray-900">${message.data.prediction.toFixed(2)}</span>
+                  <span className="font-medium text-gray-900">${message.data.prediction}</span>
                 </div>
               )}
             </div>
@@ -184,7 +184,28 @@ export function Analysis({ data }: AnalysisProps) {
   const [history,setHistory] = React.useState([]);
   const [news,setNews] = React.useState([]);
   const [media,setMedia] = React.useState([]);
-  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [messages, setMessages] = React.useState<ChatMessage[]>(() => {
+    try {
+      // Try to get messages from localStorage
+      const savedMessages = localStorage.getItem('analysisMessages');
+      
+      if (savedMessages) {
+        // Parse the saved messages
+        const parsedMessages = JSON.parse(savedMessages);
+        
+        // Convert timestamp strings back to Date objects
+        return parsedMessages.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error loading messages from localStorage:', error);
+      return [];
+    }
+  });
   const [newMessage, setNewMessage] = React.useState('');
   const [selectedCompany, setSelectedCompany] = React.useState<Company | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
@@ -210,6 +231,9 @@ export function Analysis({ data }: AnalysisProps) {
 
   React.useEffect(() => {
     scrollToBottom();
+    
+    // Save messages to localStorage whenever they change
+    localStorage.setItem('analysisMessages', JSON.stringify(messages));
   }, [messages]);
 
   React.useEffect(() => {
@@ -223,17 +247,141 @@ export function Analysis({ data }: AnalysisProps) {
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
-
-    if (selectedCompany && newMessage.trim()) {
-      const userMessage: ChatMessage = {
-        id: Date.now().toString(),
-        type: 'user',
-        content: newMessage,
-        timestamp: new Date()
-      };
-
-      const rawResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/historical', {
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: newMessage,
+      timestamp: new Date()
+    };
+    if(messages.length<2){
+      console.log("here")
+  
+      if (selectedCompany && newMessage.trim()) {
+  
+        const rawResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/historical', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
+          },
+          body: JSON.stringify({
+            "symbol": selectedCompany.symbol,
+            "user_query": newMessage.trim()
+        })
+        });
+        const content = await rawResponse.json();
+        console.log(content)
+  
+        const transformedHistoryData = content.data.historical_prices.map((eachData)=>{
+          return {
+            date: convertDate(eachData.date),
+            price: eachData.price
+          }
+        })
+  
+        console.log(transformedHistoryData)
+  
+        setHistory(transformedHistoryData.reverse())
+  
+        const newsResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/news', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
+          },
+          body: JSON.stringify({
+            "symbol": selectedCompany.symbol,
+            "user_query": newMessage.trim()
+        })
+        });
+        const newsContent = await newsResponse.json();
+        console.log(newsContent)
+  
+        const transformedNewsData = newsContent.data.articles.map((eachData)=>{
+          return {
+            title: eachData.title,
+            source: eachData.source,
+            date: formatNewsDate(eachData.published),
+            link: eachData.link,
+          }
+        })
+  
+        console.log(transformedNewsData)
+        setNews(transformedNewsData)
+  
+        const mediaResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/socialmedia', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
+          },
+          body: JSON.stringify({
+            "symbol": selectedCompany.symbol,
+            "user_query": newMessage.trim()
+        })
+        });
+        const socialMediaContent = await mediaResponse.json();
+        console.log(socialMediaContent)
+  
+        const transformedMediaData = socialMediaContent.data.posts.map((eachData)=>{
+          return {
+            platform: "Reddit",
+            user: eachData.author,
+            content: eachData.title,
+            sentiment: eachData.sentiment,
+            date: formatNewsDate(eachData.created)
+          }
+        })
+  
+        console.log(transformedMediaData)
+        setMedia(transformedMediaData)
+  
+        const resultResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/result', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
+          },
+          body: JSON.stringify({
+            "symbol": selectedCompany.symbol,
+            "user_query": newMessage.trim()
+        })
+        });
+        const resultContent = await resultResponse.json();
+        console.log(socialMediaContent)
+  
+        const transformedResultData = resultContent.data.structured_output
+  
+        
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: transformedResultData.analysis,
+          timestamp: new Date(),
+          data: !showCollapsible ? {
+            sentiment: transformedResultData["predicted_percentage_change"],
+            recommendation: transformedResultData['predicted_direction'] === 'Up'? 'Buy' : 'Sell',
+            pros: Array.isArray(transformedResultData["positive_developments"]) ? transformedResultData["positive_developments"]:transformedResultData["positive_developments"].split(',') ,
+            cons: Array.isArray(transformedResultData["potential_concerns"]) ? transformedResultData["potential_concerns"] : transformedResultData["potential_concerns"].split(','),
+            prediction: transformedResultData["predicted_price"]
+          } : undefined
+        };
+  
+        setMessages(prev => [...prev, userMessage, aiMessage]);
+        if (!showCollapsible) {
+          setShowCollapsible(true);
+        }
+        setNewMessage('');
+      }
+    }else{
+      console.log("here---2")
+      const followUpResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/followup', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -241,108 +389,31 @@ export function Analysis({ data }: AnalysisProps) {
           'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
         },
         body: JSON.stringify({
-          "symbol": selectedCompany.symbol,
+          "symbol": selectedCompany?.symbol,
           "user_query": newMessage.trim()
       })
       });
-      const content = await rawResponse.json();
-      console.log(content)
+      const followUpcontent = await followUpResponse.json();
+      console.log(followUpcontent)
 
-      const transformedHistoryData = content.data.historical_prices.map((eachData)=>{
-        return {
-          date: convertDate(eachData.date),
-          price: eachData.price
-        }
-      })
-
-      console.log(transformedHistoryData)
-
-      setHistory(transformedHistoryData.reverse())
-
-      const newsResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/news', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
-        },
-        body: JSON.stringify({
-          "symbol": selectedCompany.symbol,
-          "user_query": newMessage.trim()
-      })
-      });
-      const newsContent = await newsResponse.json();
-      console.log(newsContent)
-
-      const transformedNewsData = newsContent.data.articles.map((eachData)=>{
-        return {
-          title: eachData.title,
-          source: eachData.source,
-          date: formatNewsDate(eachData.published),
-          link: eachData.link,
-        }
-      })
-
-      console.log(transformedNewsData)
-      setNews(transformedNewsData)
-
-      const mediaResponse = await fetch('http://127.0.0.1:5001/api/prediction/multistep/socialmedia', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
-        },
-        body: JSON.stringify({
-          "symbol": selectedCompany.symbol,
-          "user_query": newMessage.trim()
-      })
-      });
-      const socialMediaContent = await mediaResponse.json();
-      console.log(socialMediaContent)
-
-      const transformedMediaData = socialMediaContent.data.posts.map((eachData)=>{
-        return {
-          platform: "Reddit",
-          user: eachData.author,
-          content: eachData.title,
-          sentiment: eachData.sentiment,
-          date: formatNewsDate(eachData.created)
-        }
-      })
-
-      console.log(transformedMediaData)
-      setMedia(transformedMediaData)
-
-
-
-      // {
-      //   date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      //   price: +(basePrice + randomChange).toFixed(2)
-      // }
-
-      
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: dummyResponses[selectedCompany.symbol] || "I'm analyzing the stock data...",
+        content: followUpcontent.llm_response,
         timestamp: new Date(),
-        data: !showCollapsible ? {
-          sentiment: 75,
-          recommendation: 'Buy',
-          pros: ['Strong market position', 'Innovation leadership'],
-          cons: ['Market competition', 'Economic uncertainties'],
-          prediction: 185.50
-        } : undefined
+        data:  undefined
       };
 
       setMessages(prev => [...prev, userMessage, aiMessage]);
-      if (!showCollapsible) {
-        setShowCollapsible(true);
-      }
       setNewMessage('');
     }
+
+
   };
+
+  useEffect(()=>{
+    console.log(messages)
+  },[messages])
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -356,10 +427,6 @@ export function Analysis({ data }: AnalysisProps) {
       );
     }
     return null;
-  };
-
-  const getMarketData = (symbol: string) => {
-    return marketData[symbol as keyof typeof marketData] || marketData.AAPL;
   };
 
   return (
@@ -484,6 +551,17 @@ export function Analysis({ data }: AnalysisProps) {
       <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <form className="flex items-center space-x-4" onSubmit={handleSubmit}>
+          <button
+                type="button"
+                onClick={()=>{
+                  setMessages([])
+                  localStorage.removeItem('analysisMessages')
+                  setShowCollapsible(false)
+                }}
+                className="px-4 py-2.5 bg-gray-200 border-2 border-gray-200 rounded-lg text-left text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 transition-colors"
+              >
+                {'New chat'}
+              </button>
             <div className="w-1/5 relative">
               <button
                 type="button"
