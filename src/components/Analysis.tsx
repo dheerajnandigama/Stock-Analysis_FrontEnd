@@ -647,7 +647,7 @@ export function Analysis({ data }: AnalysisProps) {
                               <span className={`font-medium ${
                                 message.data.recommendation === 'Buy' ? 'text-green-600' : 'text-red-600'
                               }`}>
-                                {message.data.sentiment > 0 ? '+' : ''}{message.data.sentiment}%
+                                {message.data.sentiment > 0 ? '+' : ''}{message.data.sentiment}
                               </span>
                             </div>
                           )}
@@ -688,7 +688,7 @@ export function Analysis({ data }: AnalysisProps) {
                           {message.data.prediction && (
                             <div className="flex items-center space-x-2">
                               <span className="text-sm font-medium text-gray-700">Price Target:</span>
-                              <span className="font-medium text-gray-900">${message.data.prediction}</span>
+                              <span className="font-medium text-gray-900">{message.data.prediction}</span>
                             </div>
                           )}
                         </div>
@@ -707,7 +707,7 @@ export function Analysis({ data }: AnalysisProps) {
 
       <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <form className="flex items-center space-x-4" onSubmit={handleSubmit}>
+          <form className="flex flex-row items-center space-x-4" onSubmit={handleSubmit}>
             <button
               type="button"
               onClick={() => {
@@ -715,32 +715,56 @@ export function Analysis({ data }: AnalysisProps) {
                 localStorage.removeItem('analysisMessages')
                 setShowCollapsible(false)
               }}
-              className="px-4 py-2.5 bg-gray-200 border-2 border-gray-200 rounded-lg text-left text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 transition-colors"
+              className="px-4 py-2.5 bg-gray-200 border-2 border-gray-200 rounded-lg text-left text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 transition-colors whitespace-nowrap"
             >
-              {'New chat'}
+              New chat
             </button>
-            <div className="w-1/5 relative">
+            <div className="w-1/3 relative">
               <button
                 type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg text-left text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 transition-colors"
+                className="w-full px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg text-left text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 transition-colors flex items-center justify-between"
               >
-                {selectedCompany ? selectedCompany.symbol : 'Select company'}
+                {selectedCompany ? (
+                  <div className="flex items-center justify-between w-full">
+                    <div>
+                      <span className="font-medium text-gray-900">{selectedCompany.symbol}</span>
+                      <span className="ml-2 text-sm text-gray-500">{selectedCompany.name}</span>
+                    </div>
+                    <ChevronUp className="h-4 w-4 text-gray-400" />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between w-full">
+                    <span>Select company</span>
+                    <ChevronUp className="h-4 w-4 text-gray-400" />
+                  </div>
+                )}
               </button>
               
               {isDropdownOpen && (
-                <div className="absolute bottom-full mb-1 w-full bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute bottom-full mb-1 w-full bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto">
                   {companies.map((company) => (
                     <button
                       key={company.symbol}
                       type="button"
-                      className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm transition-colors"
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 text-sm transition-colors border-b border-gray-100 last:border-0"
                       onClick={() => {
                         setSelectedCompany(company);
                         setIsDropdownOpen(false);
                       }}
                     >
-                      {company.symbol} - {company.name}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-medium text-gray-900">{company.symbol}</span>
+                          <span className="ml-2 text-sm text-gray-500">{company.name}</span>
+                        </div>
+                        {selectedCompany?.symbol === company.symbol && (
+                          <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                        )}
+                      </div>
+                      {company.description && (
+                        <p className="mt-1 text-sm text-gray-500 line-clamp-1">{company.description}</p>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -752,7 +776,7 @@ export function Analysis({ data }: AnalysisProps) {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Enter your analysis query..."
-              className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 transition-colors"
+              className="w-1/2 px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 transition-colors"
             />
             
             <button

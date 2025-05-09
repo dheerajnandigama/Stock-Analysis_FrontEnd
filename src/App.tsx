@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Navigation } from './components/Navigation';
 import { Analysis } from './components/Analysis';
 import { Portfolio } from './components/Portfolio';
-import { Profile } from './components/Profile';
 import { Login } from './components/auth/Login';
 import { Register } from './components/auth/Register';
 import { CommonHeader } from './components/CommonHeader';
@@ -134,7 +133,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <Route path="/" element={<Navigate to="/analysis" replace />} />
             <Route path="/analysis" element={<Analysis data={mockStockData} />} />
             <Route path="/portfolio" element={<Portfolio items={portfolio} onRemove={handleRemoveFromPortfolio} />} />
-            <Route path="/profile" element={<Profile />} />
           </Routes>
         </main>
       </div>

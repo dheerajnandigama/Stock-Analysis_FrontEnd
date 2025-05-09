@@ -179,89 +179,91 @@ export function Portfolio({ items, onRemove }: PortfolioProps) {
           <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">Portfolio Overview</h2>
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">Total Value</p>
-                  <p className="text-xl font-semibold">${port?.summary?.["total_amount_invested"]}</p>
+              {port?.summary && (
+                <div className="flex items-center space-x-4">
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">Total Value</p>
+                    <p className="text-xl font-semibold">${port.summary["total_amount_invested"]?.toFixed(2) || '0.00'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">Total P/L</p>
+                    <p className={`text-lg font-semibold ${port.summary["status"] === "Profit" ? 'text-green-500' : 'text-red-500'}`}>
+                      ${port.summary["total_profit_or_loss_amount"]?.toFixed(2) || '0.00'} ({port.summary["total_profit_or_loss_percent"]?.toFixed(2) || '0.00'}%)
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">Total P/L</p>
-                  <p className={`text-lg font-semibold ${port?.summary?.["status"] === "Profit" ? 'text-green-500' : 'text-red-500'}`}>
-                    ${port?.summary?.["total_profit_or_loss_amount"].toFixed(2)} ({port?.summary?.["total_profit_or_loss_percent"].toFixed(2)}%)
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {port?.portfolio?.map((item) => {
-                const isPositive = (item.profitLoss || 0) >= 0;
+              {port?.portfolio?.length > 0 ? (
+                port.portfolio.map((item) => {
+                  const isPositive = (item.profitLoss || 0) >= 0;
 
-                return (
-                  <div 
-                    key={item.symbol} 
-                    className={`bg-gray-50 rounded-lg p-6 relative group cursor-pointer ${
-                      selectedStock === item.symbol ? 'ring-2 ring-blue-500' : ''
-                    }`}
-                    onClick={() => setSelectedStock(item.symbol)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                          <span className="text-sm text-gray-500">{item.symbol}</span>
-                        </div>
+                  return (
+                    <div 
+                      key={item.symbol} 
+                      className={`bg-gray-50 rounded-lg p-6 relative group cursor-pointer ${
+                        selectedStock === item.symbol ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                      onClick={() => setSelectedStock(item.symbol)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+                            <span className="text-sm text-gray-500">{item.symbol}</span>
+                          </div>
 
-                        <div className="mt-4 grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-gray-500">Current Price</p>
-                            <div className="flex items-baseline space-x-2 mt-1">
-                              <span className="text-xl font-semibold">${(item.price || 0).toFixed(2)}</span>
-                              {isPositive ? (
-                                <TrendingUp className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <TrendingDown className="h-4 w-4 text-red-500" />
-                              )}
+                          <div className="mt-4 grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-gray-500">Current Price</p>
+                              <div className="flex items-baseline space-x-2 mt-1">
+                                <span className="text-xl font-semibold">${(item.price || 0).toFixed(2)}</span>
+                                {isPositive ? (
+                                  <TrendingUp className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <TrendingDown className="h-4 w-4 text-red-500" />
+                                )}
+                              </div>
                             </div>
-                          </div>
 
-                          <div>
-                            <p className="text-sm text-gray-500">Quantity</p>
-                            <p className="text-xl font-semibold mt-1">{item.quantity || 0}</p>
-                          </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Quantity</p>
+                              <p className="text-xl font-semibold mt-1">{item.quantity || 0}</p>
+                            </div>
 
-                          <div>
-                            <p className="text-sm text-gray-500">Total Value</p>
-                            <p className="text-lg font-semibold">${(item.currentValue || 0).toFixed(2)}</p>
-                          </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Total Value</p>
+                              <p className="text-lg font-semibold">${(item.currentValue || 0).toFixed(2)}</p>
+                            </div>
 
-                          <div>
-                            <p className="text-sm text-gray-500">Profit/Loss</p>
-                            <p className={`text-lg font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                              {isPositive ? '+' : ''}{(item.profitLoss || 0).toFixed(2)} ({(item.profitLossPercentage || 0).toFixed(2)}%)
-                            </p>
+                            <div>
+                              <p className="text-sm text-gray-500">Profit/Loss</p>
+                              <p className={`text-lg font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                                {isPositive ? '+' : ''}{(item.profitLoss || 0).toFixed(2)} ({(item.profitLossPercentage || 0).toFixed(2)}%)
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="col-span-2 text-center py-12">
+                  <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">Start Your First Trade</p>
+                </div>
+              )}
             </div>
 
-            {portfolio.length === 0 && !isLoading && (
-              <div className="text-center py-12">
-                <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Start Your First Trade</p>
-              </div>
+            {selectedStock && (
+              <StockInfo symbol={selectedStock} />
             )}
           </>
         )}
       </div>
-
-      {selectedStock && (
-        <StockInfo symbol={selectedStock} />
-      )}
     </div>
   );
 }

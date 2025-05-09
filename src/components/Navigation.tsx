@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart2, Briefcase, UserCircle } from 'lucide-react';
+import { BarChart2, Briefcase } from 'lucide-react';
 
 interface NavItemProps {
   to: string;
@@ -47,11 +47,6 @@ export function Navigation() {
           to="/portfolio"
           icon={<Briefcase className="h-5 w-5" />}
           label="Portfolio"
-        />
-        <NavItem
-          to="/profile"
-          icon={<UserCircle className="h-5 w-5" />}
-          label="Profile"
         />
       </div>
     </nav>
