@@ -33,7 +33,7 @@ export function Navigation() {
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <BarChart2 className="h-6 w-6 text-blue-600" />
-          <span className="text-lg font-semibold text-gray-900">StockAnalysis</span>
+          <span className="text-lg font-semibold text-gray-900">TheStockAI</span>
         </div>
       </div>
       

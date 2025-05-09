@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { Company } from '../types';
+import toast, { Toaster } from 'react-hot-toast';
 
 
 interface StockSelectorProps {
@@ -33,7 +34,7 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
 
   React.useEffect(()=>{
     (async()=>{
-        const allStockResponse = await fetch('http://stockmarket-alb-1239048680.us-east-1.elb.amazonaws.com/companies', {
+        const allStockResponse = await fetch('http://localhost:5002/companies', {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -61,7 +62,7 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
 
   React.useEffect(()=>{
     (async()=>{
-        const currPriceResponse = await fetch(`http://stockmarket-alb-1239048680.us-east-1.elb.amazonaws.com/current-price?ticker=${selectedStock.symbol}`, {
+        const currPriceResponse = await fetch(`http://localhost:5002/current-price?ticker=${selectedStock.symbol}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -88,8 +89,9 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
     }
   };
 
-  const executeTransaction = async ()=>{
-    const rawResponse = await fetch('http://stockmarket-alb-1239048680.us-east-1.elb.amazonaws.com/transaction', {
+  const executeTransaction = async () => {
+    try {
+      const rawResponse = await fetch('http://localhost:5002/transaction', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -97,23 +99,81 @@ export function StockSelector({ onSelect,callPortfolio  }: StockSelectorProps) {
           'Authorization':`Bearer ${JSON.parse(localStorage.getItem('user')).accessToken}`
         },
         body: JSON.stringify({
-            "ticker": selectedStock?.symbol,
-            "trade_qty": quantity,
-            "action": transactionType.toLocaleUpperCase(),
-            "action_price": currPrice?.currentPrice,
-            "timestamp": new Date().toISOString().split('.')[0]
-      })
+          "ticker": selectedStock?.symbol,
+          "trade_qty": quantity,
+          "action": transactionType.toLocaleUpperCase(),
+          "action_price": currPrice?.currentPrice,
+          "timestamp": new Date().toISOString().split('.')[0]
+        })
       });
-      const content = await rawResponse.json();
-      console.log(content)
-
-      await callPortfolio()
-  }
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-      <h3 className="text-lg font-semibold mb-4">Add Stock to Portfolio</h3>
       
-      <div className="space-y-6">
+      const content = await rawResponse.json();
+      
+      if (content.message === "Transaction recorded successfully") {
+        toast.success('Transaction completed successfully!', {
+          duration: 4000,
+          position: 'top-right',
+          style: {
+            background: '#10B981',
+            color: '#fff',
+          },
+        });
+        
+        // Reset form
+        setSelectedStock(null);
+        setQuantity(1);
+        setIsDropdownOpen(false);
+        
+        // Refresh portfolio
+        await callPortfolio();
+      } else if (content.error === "Not enough shares to sell") {
+        toast.error('Insufficient shares to sell. Please check your portfolio holdings.', {
+          duration: 5000,
+          position: 'top-right',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+          },
+        });
+      } else {
+        toast.error('Transaction failed. Please try again.', {
+          duration: 4000,
+          position: 'top-right',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+          },
+        });
+      }
+    } catch (error) {
+      toast.error('An error occurred. Please try again.', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+        },
+      });
+      console.error('Transaction error:', error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className: '',
+          style: {
+            marginTop: '80px',
+            background: '#363636',
+            color: '#fff',
+          },
+        }}
+      />
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold mb-4">Add Stock to Portfolio</h3>
+        
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"

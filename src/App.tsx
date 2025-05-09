@@ -196,6 +196,10 @@ function App() {
             )
           }
         />
+         <Route
+          path="/confirm"
+          element={<ConfirmRegistration onConfirm={() => {}}/>}
+        />
         <Route
           path="/*"
           element={

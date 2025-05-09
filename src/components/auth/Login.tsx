@@ -43,7 +43,7 @@ export function Login({ onLogin }: { onLogin: (userData: any) => void }) {
         <div className="text-center">
           <div className="flex items-center justify-center space-x-2">
             <BarChart2 className="h-12 w-12 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">StockAnalysis</h1>
+            <h1 className="text-3xl font-bold text-gray-900">TheStockAI</h1>
           </div>
           <h2 className="mt-6 text-2xl font-semibold text-gray-900">Welcome back</h2>
           <p className="mt-2 text-gray-600">Please sign in to your account</p>
